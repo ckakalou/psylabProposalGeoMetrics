@@ -1,17 +1,11 @@
 ---
-  title: "Consortium Innovation Report (EIS 2024)"
+title: "Consortium Innovation Report (EIS 2024)"
 output:
   html_document:
-  toc: false
-number_sections: false
+    toc: false
+    number_sections: false
 params:
   data: NULL
-level_summary: NULL
-country_summary: NULL
+  level_summary: NULL
+  country_summary: NULL
 ---
-```r
-install.packages(c("shiny","dplyr","DT","leaflet","sf","bslib","rnaturalearth","rnaturalearthdata","rmarkdown"))
-# Optional for PDF:
-install.packages("pagedown")
-
-shiny::runApp()
