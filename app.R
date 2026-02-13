@@ -319,6 +319,11 @@ server <- function(input, output, session) {
     )
   )
   
+  normalize_total_budget <- function(x) {
+    v <- suppressWarnings(as.numeric(x))
+    if (is.na(v) || v < 0) 0 else v
+  }
+  
   # ---- Schema normaliser (backwards compatible with older saved scenarios) ----
   normalize_partners_df <- function(df) {
     if (is.null(df) || nrow(df) == 0) {
@@ -376,7 +381,12 @@ server <- function(input, output, session) {
     if (identical(name, "") || is.na(name)) name <- input$scenario_select
     req(!is.null(name), nchar(name) > 0)
     
-    saveRDS(normalize_partners_df(partners_rv()), scenario_path(name))
+    scenario_obj <- list(
+      partners = normalize_partners_df(partners_rv()),
+      total_budget = normalize_total_budget(input$total_budget)
+    )
+    
+    saveRDS(scenario_obj, scenario_path(name))
     refresh_scenario_dropdown(selected = name)
     updateTextInput(session, "scenario_name", value = "")
   })
@@ -386,7 +396,17 @@ server <- function(input, output, session) {
     p <- scenario_path(input$scenario_select)
     req(file.exists(p))
     
-    partners_rv(normalize_partners_df(readRDS(p)))
+    obj <- readRDS(p)
+    
+    # Backwards compatible: old scenarios saved only the partners df
+    if (is.data.frame(obj) || tibble::is_tibble(obj)) {
+      partners_rv(normalize_partners_df(obj))
+      updateNumericInput(session, "total_budget", value = 0)
+    } else {
+      partners_rv(normalize_partners_df(obj$partners))
+      updateNumericInput(session, "total_budget", value = normalize_total_budget(obj$total_budget))
+    }
+    
     updateTextInput(session, "scenario_name", value = "")
     updateNumericInput(session, "budget_value", value = NA)
   })
